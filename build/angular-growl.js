@@ -1,5 +1,5 @@
 /**
- * angular-growl - v0.3.1 - 2013-10-01
+ * angular-growl - v0.3.1 - 2013-10-16
  * https://github.com/marcorinck/angular-growl
  * Copyright (c) 2013 Marco Rinck; Licensed MIT
  */
@@ -10,8 +10,8 @@ angular.module('angular-growl').directive('growl', [
     'use strict';
     return {
       restrict: 'A',
-      template: '<div class="growl">' + '\t<div class="growl-item alert" ng-repeat="message in messages" ng-class="computeClasses(message)">' + '\t\t<button type="button" class="close" ng-click="deleteMessage(message)">&times;</button>' + '            {{ message.text}}' + '\t</div>' + '</div>',
-      replace: false,
+      template: '<div class="growl">' + '\t<div class="contents alert" ng-repeat="message in messages" ng-class="computeClasses(message)">' + '\t\t<button type="button" class="close" ng-click="deleteMessage(message)">&times;</button>' + '<span class="title">{{message.text}}</span>' + '\t</div>' + '</div>',
+      replace: true,
       scope: true,
       controller: [
         '$scope',
@@ -19,7 +19,11 @@ angular.module('angular-growl').directive('growl', [
         function ($scope, $timeout) {
           $scope.messages = [];
           $rootScope.$on('growlMessage', function (event, message) {
-            $scope.messages.push(message);
+            if (message.replace) {
+              $scope.messages = [message];
+            } else {
+              $scope.messages.push(message);
+            }
             if (message.ttl && message.ttl !== -1) {
               $timeout(function () {
                 $scope.deleteMessage(message);
@@ -98,7 +102,7 @@ angular.module('angular-growl').provider('growl', function () {
         }
         $rootScope.$broadcast('growlMessage', message);
       }
-      function sendMessage(text, config, severity) {
+      function sendMessage(text, config, severity, replace) {
         var _config = config || {}, message;
         message = {
           text: text,
@@ -106,7 +110,8 @@ angular.module('angular-growl').provider('growl', function () {
           isError: severity.isError,
           isInfo: severity.isInfo,
           isSuccess: severity.isSuccess,
-          ttl: _config.ttl || _ttl
+          ttl: _config.ttl || _ttl,
+          replace: replace
         };
         broadcastMessage(message);
       }
@@ -116,8 +121,8 @@ angular.module('angular-growl').provider('growl', function () {
       function addErrorMessage(text, config) {
         sendMessage(text, config, { isError: true });
       }
-      function addInfoMessage(text, config) {
-        sendMessage(text, config, { isInfo: true });
+      function addInfoMessage(text, replace, config) {
+        sendMessage(text, config, { isInfo: true }, replace);
       }
       function addSuccessMessage(text, config) {
         sendMessage(text, config, { isSuccess: true });

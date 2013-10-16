@@ -86,20 +86,20 @@ angular.module("angular-growl").provider("growl", function() {
 			$rootScope.$broadcast("growlMessage", message);
 		}
 
-		function sendMessage(text, config, severity) {
-			var _config = config || {}, message;
-
-			message = {
-				text: text,
-				isWarn: severity.isWarn,
-				isError: severity.isError,
-				isInfo: severity.isInfo,
-				isSuccess: severity.isSuccess,
-				ttl: _config.ttl || _ttl
-			};
-
-			broadcastMessage(message);
-		}
+		function sendMessage(text, config, severity, replace) {
+      var _config = config || {}, message;
+      //BB Modification - added replace field
+      message = {
+        text: text,
+        isWarn: severity.isWarn,
+        isError: severity.isError,
+        isInfo: severity.isInfo,
+        isSuccess: severity.isSuccess,
+        ttl: _config.ttl || _ttl,
+        replace: replace
+      };
+      broadcastMessage(message);
+    }
 
 		/**
 		 * add one warn message with bootstrap class: alert
@@ -127,9 +127,11 @@ angular.module("angular-growl").provider("growl", function() {
 		 * @param {string} text
 		 * @param {{ttl: number}} config
 		 */
-		function addInfoMessage(text, config) {
-			sendMessage(text, config, {isInfo: true});
-		}
+		 
+		//BB Modification - added replace field
+    function addInfoMessage(text, replace, config) {
+      sendMessage(text, config, { isInfo: true }, replace);
+    }
 
 		/**
 		 * add one success message with bootstrap classes: alert, alert-success
