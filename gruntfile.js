@@ -8,7 +8,7 @@ module.exports = function (grunt) {
 		language: grunt.option('lang') || 'en',
 
 		meta: {
-			banner: '/**\n * <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
+			banner: '/**\n * <%= pkg.title || pkg.name %> - <%= pkg.version %> - ' +
 				'<%= grunt.template.today("yyyy-mm-dd") %>\n' +
 				' * <%= pkg.homepage %>\n' +
 				' * Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author %>;' +
