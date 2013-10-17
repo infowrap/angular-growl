@@ -10,7 +10,7 @@ angular.module('angular-growl').directive('growl', [
     'use strict';
     return {
       restrict: 'A',
-      template: '<div class="growl">' + '\t<div class="contents alert" ng-repeat="message in messages" ng-class="computeClasses(message)" ng-click="deleteMessage(message)">' + '\t\t<button type="button" class="close">&times;</button>' + '<span class="title">{{message.text}}</span>' + '\t</div>' + '</div>',
+      template: '<div class="growl">' + '\t<div class="contents alert" ng-repeat="message in messages" ng-class="computeClasses(message)" ng-click="deleteMessage(message)" data-icon="notification">' + '<span class="title">{{message.text}}</span>' + '\t</div>' + '</div>',
       replace: true,
       scope: true,
       controller: [
