@@ -124,15 +124,15 @@ module.exports = function (grunt) {
 				add: true,
 				addFiles: ['.'], // '.' for all files except ingored files in .gitignore
 				commit: true,
-				commitMessage: 'Release v%VERSION%',
+				commitMessage: 'Release %VERSION%',
 				commitFiles: ['package.json', 'bower.json', 'build/angular-growl.js', 'build/angular-growl.min.js', 'build/angular-growl.min.css', 'README.md'], // '-a' for all files
 				createTag: true,
-				tagName: 'v%VERSION%',
-				tagMessage: 'Version %VERSION%',
+				tagName: '%VERSION%',
+				tagMessage: '%VERSION%',
 				push: true,
 				pushTo: 'origin',
-				npm: true,
-				npmTag: 'Release v%VERSION%',
+				npm: false,
+				npmTag: '%VERSION%',
 				gitDescribeOptions: '--tags --always --abbrev=1 --dirty=-d' // options to use with '$ git describe'
 			}
 		}
