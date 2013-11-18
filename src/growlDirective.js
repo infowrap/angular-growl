@@ -10,7 +10,8 @@ angular.module('angular-growl').directive('growl', ['$rootScope', function ($roo
       //     '</div>',
 
       // BB Modified template
-      template: '<div class="growl">' + '\t<div class="contents alert" ng-repeat="message in messages" ng-class="computeClasses(message)">' + '\t\t<button type="button" class="close" ng-click="deleteMessage(message)">&times;</button>' + '<span class="title" data-ng-bind-html="message.text"></span>' + '\t</div>' + '</div>',
+      template: '<div class="growl">' + '\t<div class="contents alert" ng-repeat="message in messages" ng-click="deleteMessage(message)" ng-class="computeClasses(message)">' + '\t\t<button type="button" class="close">&times;</button>' + '<span class="title" ng-bind-html="message.text"></span>' + '\t</div>' + '</div>',
+
       // end modification
 
       replace: true,
@@ -20,7 +21,7 @@ angular.module('angular-growl').directive('growl', ['$rootScope', function ($roo
         '$timeout',
         function ($scope, $timeout) {
           $scope.messages = [];
-          
+
           // BB Modification
           $rootScope.$on('growlMessage', function (event, message) {
             if(message.replace){
