@@ -2,9 +2,11 @@ angular.module("angular-growl").provider("growl", function() {
 	"use strict";
 
 	var _ttl = null,
+        _enableHtml = false,
 		_messagesKey = 'messages',
 		_messageTextKey = 'text',
-		_messageSeverityKey = 'severity';
+		_messageSeverityKey = 'severity',
+		_onlyUniqueMessages = true;
 
 	/**
 	 * set a global timeout (time to live) after which messages will be automatically closed
@@ -13,6 +15,15 @@ angular.module("angular-growl").provider("growl", function() {
 	 */
 	this.globalTimeToLive = function(ttl) {
 		_ttl = ttl;
+	};
+
+	/**
+	 * set whether HTML in message content should be escaped (default) or binded as-is
+	 *
+	 * @param {bool} enableHtml true to make all messages not escapes
+	 */
+	this.globalEnableHtml = function(enableHtml) {
+		_enableHtml = enableHtml;
 	};
 
 	/**
@@ -41,6 +52,10 @@ angular.module("angular-growl").provider("growl", function() {
 	 */
 	this.messageSeverityKey = function(messageSeverityKey) {
 		_messageSeverityKey = messageSeverityKey;
+	};
+
+	this.onlyUniqueMessages = function(onlyUniqueMessages) {
+		_onlyUniqueMessages = onlyUniqueMessages;
 	};
 
 	/**
@@ -87,19 +102,18 @@ angular.module("angular-growl").provider("growl", function() {
 		}
 
 		function sendMessage(text, config, severity, replace) {
-      var _config = config || {}, message;
-      //BB Modification - added replace field
-      message = {
-        text: text,
-        isWarn: severity.isWarn,
-        isError: severity.isError,
-        isInfo: severity.isInfo,
-        isSuccess: severity.isSuccess,
-        ttl: _config.ttl || _ttl,
-        replace: replace
-      };
-      broadcastMessage(message);
-    }
+			var _config = config || {}, message;
+
+			message = {
+				text: text,
+				severity: severity,
+				ttl: _config.ttl || _ttl,
+				enableHtml: _config.enableHtml || _enableHtml,
+				replace: replace
+			};
+
+			broadcastMessage(message);
+		}
 
 		/**
 		 * add one warn message with bootstrap class: alert
@@ -108,7 +122,7 @@ angular.module("angular-growl").provider("growl", function() {
 		 * @param {{ttl: number}} config
 		 */
 		function addWarnMessage(text, config) {
-			sendMessage(text, config, {isWarn: true});
+			sendMessage(text, config, "warn");
 		}
 
 		/**
@@ -118,7 +132,7 @@ angular.module("angular-growl").provider("growl", function() {
 		 * @param {{ttl: number}} config
 		 */
 		function addErrorMessage(text, config) {
-			sendMessage(text, config, {isError: true});
+			sendMessage(text, config, "error");
 		}
 
 		/**
@@ -127,11 +141,9 @@ angular.module("angular-growl").provider("growl", function() {
 		 * @param {string} text
 		 * @param {{ttl: number}} config
 		 */
-		 
-		//BB Modification - added replace field
-    function addInfoMessage(text, replace, config) {
-      sendMessage(text, config, { isInfo: true }, replace);
-    }
+		function addInfoMessage(text, config, replace) {
+			sendMessage(text, config, "info", replace);
+		}
 
 		/**
 		 * add one success message with bootstrap classes: alert, alert-success
@@ -140,7 +152,7 @@ angular.module("angular-growl").provider("growl", function() {
 		 * @param {{ttl: number}} config
 		 */
 		function addSuccessMessage(text, config) {
-			sendMessage(text, config, {isSuccess: true});
+			sendMessage(text, config, "success");
 		}
 
 		/**
@@ -157,16 +169,16 @@ angular.module("angular-growl").provider("growl", function() {
 				if (message[_messageTextKey] && message[_messageSeverityKey]) {
 					switch (message[_messageSeverityKey]) {
 						case "warn":
-							severity = {isWarn: true};
+							severity = "warn";
 							break;
 						case "success":
-							severity = {isSuccess: true};
+							severity = "success";
 							break;
 						case "info":
-							severity = {isInfo: true};
+							severity = "info";
 							break;
 						case "error":
-							severity = {isError: true};
+							severity = "error";
 							break;
 					}
 					sendMessage(message[_messageTextKey], undefined, severity);
@@ -174,12 +186,17 @@ angular.module("angular-growl").provider("growl", function() {
 			}
 		}
 
+		function onlyUnique() {
+			return _onlyUniqueMessages;
+		}
+
 		return {
 			addWarnMessage: addWarnMessage,
 			addErrorMessage: addErrorMessage,
 			addInfoMessage: addInfoMessage,
 			addSuccessMessage: addSuccessMessage,
-			addServerMessages: addServerMessages
+			addServerMessages: addServerMessages,
+			onlyUnique: onlyUnique
 		};
 	}];
 });

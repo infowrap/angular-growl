@@ -1,7 +1,7 @@
 /**
- * angular-growl - 0.1.6 - 2013-11-17
+ * angular-growl - 0.4.0 - 2015-07-28
  * https://github.com/infowrap/angular-growl
- * Copyright (c) 2013 Marco Rinck and Infowrap; Licensed MIT
+ * Copyright (c) 2015 Marco Rinck and Infowrap; Licensed MIT
  */
 angular.module('angular-growl', []);
 angular.module('angular-growl').directive('growl', [
@@ -10,24 +10,37 @@ angular.module('angular-growl').directive('growl', [
     'use strict';
     return {
       restrict: 'A',
-      template: '<div class="growl">' + '\t<div class="contents alert" ng-repeat="message in messages" ng-click="deleteMessage(message)" ng-class="computeClasses(message)">' + '\t\t<button type="button" class="close">&times;</button>' + '<span class="title" ng-bind-html="message.text"></span>' + '\t</div>' + '</div>',
-      replace: true,
+      template: '<div class="growl">' + '\t<div class="growl-item alert" ng-repeat="message in messages" ng-class="computeClasses(message)">' + '\t\t<button type="button" class="close" ng-click="deleteMessage(message)">&times;</button>' + '       <div ng-switch="message.enableHtml">' + '           <div ng-switch-when="true" ng-bind-html="message.text"></div>' + '           <div ng-switch-default ng-bind="message.text"></div>' + '       </div>' + '\t</div>' + '</div>',
+      replace: false,
       scope: true,
       controller: [
         '$scope',
         '$timeout',
-        function ($scope, $timeout) {
+        'growl',
+        function ($scope, $timeout, growl) {
+          var onlyUnique = growl.onlyUnique();
           $scope.messages = [];
-          $rootScope.$on('growlMessage', function (event, message) {
-            if (message.replace) {
-              $scope.messages = [message];
-            } else {
-              $scope.messages.push(message);
-            }
+          function addMessage(message) {
+            $scope.messages.push(message);
             if (message.ttl && message.ttl !== -1) {
               $timeout(function () {
                 $scope.deleteMessage(message);
               }, message.ttl);
+            }
+          }
+          $rootScope.$on('growlMessage', function (event, message) {
+            var found;
+            if (onlyUnique) {
+              angular.forEach($scope.messages, function (msg) {
+                if (message.text === msg.text && message.severity === msg.severity) {
+                  found = true;
+                }
+              });
+              if (!found) {
+                addMessage(message);
+              }
+            } else {
+              addMessage(message);
             }
           });
           $scope.deleteMessage = function (message) {
@@ -38,11 +51,11 @@ angular.module('angular-growl').directive('growl', [
           };
           $scope.computeClasses = function (message) {
             return {
-              'alert-success': message.isSuccess,
-              'alert-error': message.isError,
-              'alert-danger': message.isError,
-              'alert-info': message.isInfo,
-              'alert-warning': message.isWarn
+              'alert-success': message.severity === 'success',
+              'alert-error': message.severity === 'error',
+              'alert-danger': message.severity === 'error',
+              'alert-info': message.severity === 'info',
+              'alert-warning': message.severity === 'warn'
             };
           };
         }
@@ -52,9 +65,12 @@ angular.module('angular-growl').directive('growl', [
 ]);
 angular.module('angular-growl').provider('growl', function () {
   'use strict';
-  var _ttl = null, _messagesKey = 'messages', _messageTextKey = 'text', _messageSeverityKey = 'severity';
+  var _ttl = null, _enableHtml = false, _messagesKey = 'messages', _messageTextKey = 'text', _messageSeverityKey = 'severity', _onlyUniqueMessages = true;
   this.globalTimeToLive = function (ttl) {
     _ttl = ttl;
+  };
+  this.globalEnableHtml = function (enableHtml) {
+    _enableHtml = enableHtml;
   };
   this.messagesKey = function (messagesKey) {
     _messagesKey = messagesKey;
@@ -64,6 +80,9 @@ angular.module('angular-growl').provider('growl', function () {
   };
   this.messageSeverityKey = function (messageSeverityKey) {
     _messageSeverityKey = messageSeverityKey;
+  };
+  this.onlyUniqueMessages = function (onlyUniqueMessages) {
+    _onlyUniqueMessages = onlyUniqueMessages;
   };
   this.serverMessagesInterceptor = [
     '$q',
@@ -106,26 +125,24 @@ angular.module('angular-growl').provider('growl', function () {
         var _config = config || {}, message;
         message = {
           text: text,
-          isWarn: severity.isWarn,
-          isError: severity.isError,
-          isInfo: severity.isInfo,
-          isSuccess: severity.isSuccess,
+          severity: severity,
           ttl: _config.ttl || _ttl,
+          enableHtml: _config.enableHtml || _enableHtml,
           replace: replace
         };
         broadcastMessage(message);
       }
       function addWarnMessage(text, config) {
-        sendMessage(text, config, { isWarn: true });
+        sendMessage(text, config, 'warn');
       }
       function addErrorMessage(text, config) {
-        sendMessage(text, config, { isError: true });
+        sendMessage(text, config, 'error');
       }
-      function addInfoMessage(text, replace, config) {
-        sendMessage(text, config, { isInfo: true }, replace);
+      function addInfoMessage(text, config, replace) {
+        sendMessage(text, config, 'info', replace);
       }
       function addSuccessMessage(text, config) {
-        sendMessage(text, config, { isSuccess: true });
+        sendMessage(text, config, 'success');
       }
       function addServerMessages(messages) {
         var i, message, severity, length;
@@ -135,28 +152,32 @@ angular.module('angular-growl').provider('growl', function () {
           if (message[_messageTextKey] && message[_messageSeverityKey]) {
             switch (message[_messageSeverityKey]) {
             case 'warn':
-              severity = { isWarn: true };
+              severity = 'warn';
               break;
             case 'success':
-              severity = { isSuccess: true };
+              severity = 'success';
               break;
             case 'info':
-              severity = { isInfo: true };
+              severity = 'info';
               break;
             case 'error':
-              severity = { isError: true };
+              severity = 'error';
               break;
             }
             sendMessage(message[_messageTextKey], undefined, severity);
           }
         }
       }
+      function onlyUnique() {
+        return _onlyUniqueMessages;
+      }
       return {
         addWarnMessage: addWarnMessage,
         addErrorMessage: addErrorMessage,
         addInfoMessage: addInfoMessage,
         addSuccessMessage: addSuccessMessage,
-        addServerMessages: addServerMessages
+        addServerMessages: addServerMessages,
+        onlyUnique: onlyUnique
       };
     }
   ];

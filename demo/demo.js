@@ -5,6 +5,7 @@ app.config(["growlProvider", "$httpProvider", function(growlProvider, $httpProvi
 	growlProvider.messagesKey("my-messages");
 	growlProvider.messageTextKey("messagetext");
 	growlProvider.messageSeverityKey("severity-level");
+	growlProvider.onlyUniqueMessages(true);
 	$httpProvider.responseInterceptors.push(growlProvider.serverMessagesInterceptor);
 
 
@@ -22,12 +23,15 @@ app.run(function($httpBackend) {
 	});
 });
 
-app.controller("demoCtrl", function demoCtrl($scope, growl, $http) {
+app.controller("demoCtrl",  function demoCtrl($scope, growl, $http) {
 
 	$scope.createMessage = function () {
 		var config = {};
 		if ($scope.timeout) {
 			config.ttl = $scope.timeout;
+		}
+		if ($scope.enableHtml) {
+			config.enableHtml = $scope.enableHtml;
 		}
 
 		if ($scope.alertType === "success") {
